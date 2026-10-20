@@ -1,0 +1,549 @@
+/* Dhun Decoder — a single dark "cinema hall" look, so no light theme. */
+:root {
+  color-scheme: dark;
+  --bg: #3B0D1C;
+  --panel: #561428;
+  --edge: #7A2036;
+  --cream: #FFF1D6;
+  --ink: #2A0A14;
+  --marigold: #F5B700;
+  --muted: #D9A9B4;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  background: var(--bg);
+}
+
+body {
+  overflow: hidden;
+  font-family: "Baloo 2", "Segoe UI", system-ui, sans-serif;
+  color: var(--cream);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Phaser's Scale.FIT + CENTER_BOTH centres the canvas (and its DOM layer) inside this box,
+   so it stays a plain block: flex centring would shift the DOM layer away from the canvas. */
+#game {
+  position: fixed;
+  top: env(safe-area-inset-top, 0px);
+  bottom: env(safe-area-inset-bottom, 0px);
+  left: max(16px, env(safe-area-inset-left, 0px));
+  right: max(16px, env(safe-area-inset-right, 0px));
+  display: block;
+}
+
+#game canvas {
+  display: block;
+  touch-action: none;
+}
+
+/* Fallback share sheet, shown when the clipboard is unavailable */
+.share-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-block: 24px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: rgba(20, 4, 10, 0.75);
+}
+
+.share-card {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 22px;
+  border-radius: 20px;
+  background: var(--panel);
+  border: 2px solid var(--marigold);
+}
+
+.share-card h2 {
+  margin: 0;
+  font-family: "Rozha One", Georgia, serif;
+  font-size: 1.6rem;
+  font-weight: 400;
+  color: var(--marigold);
+}
+
+.share-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.share-card textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 110px;
+  padding: 12px;
+  border: 0;
+  border-radius: 12px;
+  resize: none;
+  background: var(--cream);
+  color: var(--ink);
+  font: 600 1rem/1.5 "Baloo 2", "Segoe UI", sans-serif;
+}
+
+.share-card button {
+  padding: 12px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--marigold);
+  color: var(--ink);
+  font: 800 1rem "Baloo 2", "Segoe UI", sans-serif;
+  cursor: pointer;
+}
+
+.share-card button:focus-visible,
+.share-card textarea:focus-visible {
+  outline: 3px solid var(--cream);
+  outline-offset: 2px;
+}
+
+/* "Listen on YouTube" link, placed over the canvas by Phaser's DOM layer.
+   Phaser transforms .listen-wrap, so animations stay on the inner link (opacity only). */
+.listen-wrap {
+  width: max-content;
+  padding: 4px;
+}
+
+.listen-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 20px;
+  border-radius: 999px;
+  background: var(--cream);
+  color: var(--ink);
+  font: 800 20px/1.1 "Baloo 2", "Segoe UI", sans-serif;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 5px 0 rgba(0, 0, 0, 0.3);
+  animation: listen-in 0.35s ease-out 0.25s both;
+}
+
+.listen-link:hover {
+  background: #FFFFFF;
+}
+
+.listen-link:focus-visible {
+  outline: 3px solid var(--marigold);
+  outline-offset: 3px;
+}
+
+.listen-link img {
+  display: block;
+}
+
+@keyframes listen-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .listen-link { animation: none; }
+}
+
+/* Studio panel (test mode only) */
+.studio-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow-y: auto;
+  padding-block: 24px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: rgba(8, 2, 6, 0.7);
+}
+
+.studio-card {
+  width: 100%;
+  max-width: 460px;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  border-radius: 22px;
+  background: #1E0A12;
+  border: 2px solid var(--marigold);
+  color: var(--cream);
+  font-family: "Baloo 2", "Segoe UI", sans-serif;
+}
+
+.studio-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.studio-head h2 {
+  margin: 0;
+  font: 400 1.7rem "Rozha One", Georgia, serif;
+  color: var(--marigold);
+}
+
+.studio-badge {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: #E5484D;
+  color: #FFF1D6;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.studio-close {
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 241, 214, 0.1);
+  cursor: pointer;
+}
+
+.studio-label {
+  margin: 8px 0 0;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--marigold);
+}
+
+.studio-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+  gap: 8px;
+}
+
+.studio-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 4px 8px;
+  border: 2px solid rgba(255, 241, 214, 0.15);
+  border-radius: 14px;
+  background: rgba(255, 241, 214, 0.06);
+  color: var(--cream);
+  font: 700 0.85rem "Baloo 2", "Segoe UI", sans-serif;
+  cursor: pointer;
+}
+
+.studio-option span {
+  max-width: 100%;
+  font-size: 0.8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.studio-option[aria-pressed="true"] {
+  border-color: var(--marigold);
+  background: rgba(245, 183, 0, 0.18);
+}
+
+.studio-note {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #D9A9B4;
+}
+
+.studio-ship {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.studio-ship code {
+  flex: 1;
+  min-width: 0;
+  padding: 10px;
+  border-radius: 10px;
+  background: #0E0408;
+  color: #7EE3B0;
+  font: 600 0.78rem/1.4 ui-monospace, Menlo, Consolas, monospace;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.studio-copy {
+  padding: 0 16px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--marigold);
+  color: var(--ink);
+  font: 800 0.95rem "Baloo 2", "Segoe UI", sans-serif;
+  cursor: pointer;
+}
+
+.studio-option:focus-visible,
+.studio-close:focus-visible,
+.studio-copy:focus-visible {
+  outline: 3px solid var(--cream);
+  outline-offset: 2px;
+}
+
+/* Pause menu and settings sheet. Colours follow the active theme (Theme.apply sets the
+   custom properties), so the panel matches Cinema, Musical, Holi, Diwali or Christmas. */
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  padding-block: 20px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: rgba(4, 2, 8, 0.72);
+  backdrop-filter: blur(3px);
+}
+
+.settings-card {
+  width: 100%;
+  max-width: 420px;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  border-radius: 24px;
+  background: var(--panel);
+  border: 2px solid var(--marigold);
+  box-shadow: 0 0 0 6px rgba(0, 0, 0, 0.25), 0 18px 40px rgba(0, 0, 0, 0.5);
+  color: var(--cream);
+  font-family: "Baloo 2", "Segoe UI", sans-serif;
+  animation: settings-pop 220ms cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+@keyframes settings-pop {
+  from { transform: scale(0.88); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-card { animation: none; }
+}
+
+.settings-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.settings-head h2 {
+  margin: 0;
+  font: 400 1.9rem "Rozha One", Georgia, serif;
+  color: var(--marigold);
+}
+
+.settings-x {
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 241, 214, 0.1);
+  cursor: pointer;
+}
+
+.settings-run {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.settings-run .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--edge);
+  font-weight: 800;
+}
+
+.settings-run .hearts {
+  color: #FF6B6B;
+  letter-spacing: 2px;
+}
+
+.settings-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.settings-row {
+  display: grid;
+  grid-template-columns: 26px auto 1fr 52px;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 4px 10px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.settings-label {
+  font-weight: 800;
+  font-size: 1rem;
+  white-space: nowrap;
+}
+
+.settings-range {
+  --fill: 70%;
+  width: 100%;
+  min-width: 60px;
+  height: 28px;
+  margin: 0;
+  background: transparent;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.settings-range::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--marigold) var(--fill), rgba(255, 241, 214, 0.18) var(--fill));
+}
+
+.settings-range::-moz-range-track {
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--marigold) var(--fill), rgba(255, 241, 214, 0.18) var(--fill));
+}
+
+.settings-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 24px;
+  height: 24px;
+  margin-top: -8px;
+  border-radius: 50%;
+  background: var(--cream);
+  border: 3px solid var(--marigold);
+}
+
+.settings-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--cream);
+  border: 3px solid var(--marigold);
+}
+
+.settings-range.off {
+  opacity: 0.4;
+}
+
+.settings-switch {
+  position: relative;
+  width: 52px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 241, 214, 0.18);
+  cursor: pointer;
+  transition: background 160ms;
+}
+
+.settings-switch span {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--cream);
+  transition: transform 160ms;
+}
+
+.settings-switch[aria-checked="true"] {
+  background: #35A06E;
+}
+
+.settings-switch[aria-checked="true"] span {
+  transform: translateX(22px);
+}
+
+.settings-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-pair {
+  display: flex;
+  gap: 10px;
+}
+
+.settings-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 54px;
+  border: 2px solid var(--edge);
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--cream);
+  font: 800 1.1rem "Baloo 2", "Segoe UI", sans-serif;
+  cursor: pointer;
+}
+
+.settings-btn.primary {
+  min-height: 62px;
+  border: 0;
+  background: var(--marigold);
+  color: var(--ink);
+  font-size: 1.3rem;
+}
+
+.settings-btn.warn {
+  border-color: #E5484D;
+  background: rgba(229, 72, 77, 0.3);
+}
+
+.settings-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.settings-x:focus-visible,
+.settings-btn:focus-visible,
+.settings-switch:focus-visible,
+.settings-range:focus-visible {
+  outline: 3px solid var(--cream);
+  outline-offset: 2px;
+}
